@@ -1,0 +1,21 @@
+name = "blt-lettuce-slack-bot"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Rules for loading non-JavaScript files
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
+# KV namespace for storing join events
+[[kv_namespaces]]
+binding = "SLACK_BOT_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+# Environment variables (set these via wrangler secret or dashboard)
+# SLACK_BOT_TOKEN - Your Slack Bot OAuth Token
+# SLACK_SIGNING_SECRET - Your Slack Signing Secret
+
+[vars]
+ENVIRONMENT = "production"
