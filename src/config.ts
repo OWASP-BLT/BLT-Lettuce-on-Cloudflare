@@ -16,7 +16,7 @@ export const CONFIG = {
   JOIN_EVENT_TTL_SECONDS: 60 * 60 * 24 * 365, // 1 year
   DAILY_STATS_RETENTION_DAYS: 90,
   
-  // Slack channel IDs (configure these for your workspace)
+  // Slack channel IDs (configure these for your workspace - currently the project blt channel's ids)
   JOINS_CHANNEL_ID: 'C2FF0UVHU',
   CONTRIBUTE_CHANNEL_ID: 'C2FF0UVHU',
 } as const;

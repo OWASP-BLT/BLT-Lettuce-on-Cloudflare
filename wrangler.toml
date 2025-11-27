@@ -25,5 +25,5 @@ ENVIRONMENT = "production"
 # Create with: wrangler kv:namespace create SLACK_BOT_KV
  [[kv_namespaces]]
  binding = "SLACK_BOT_KV"
- id = "3d93897ffd9e461c9e0bf57c04caec44"
- preview_id = "73bcfb48479f4716b9137b82ccbdb806"
+ id = "SLACK_BOT_KV id"
+ preview_id = "SLACK_BOT_KV preview_id"
