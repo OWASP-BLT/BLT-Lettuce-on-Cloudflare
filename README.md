@@ -1,6 +1,8 @@
 # BLT Lettuce
 
-A comprehensive serverless Slackbot for the OWASP BLT project, built on Cloudflare Workers with TypeScript.
+🥬 **The BLT Lettuce (OWASP Helper) Bot** - A comprehensive serverless Slackbot for the OWASP BLT project, built on Cloudflare Workers with TypeScript.
+
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare)
 
 ## Features
 
@@ -22,7 +24,7 @@ npx wrangler kv:namespace create SLACK_BOT_KV
 # Update wrangler.toml with the returned namespace ID
 
 # 3. Configure Slack app at api.slack.com/apps
-# - Create new app with Bot Token Scopes: 
+# - Create new app with Bot Token Scopes:
 #   chat:write, channels:read, im:write, im:read, users:read
 # - Enable slash commands: /blt-test, /blt-help
 # - Enable events: team_join, message.channels, message.im
@@ -35,7 +37,7 @@ npx wrangler secret put SLACK_SIGNING_SECRET
 # 5. Deploy to Cloudflare
 npm run deploy
 
-# 6. Update Slack app Request URL to: 
+# 6. Update Slack app Request URL to:
 # https://your-worker.workers.dev/slack/events
 ```
 
@@ -52,6 +54,7 @@ npm run deploy
 ### Dashboard
 
 Visit your worker URL to see:
+
 - Total members welcomed
 - Join statistics and charts
 - Recent join events
@@ -110,14 +113,15 @@ BLT-Lettuce/
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `SLACK_BOT_TOKEN` | Slack Bot OAuth Token (starts with `xoxb-`) |
+| Variable               | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `SLACK_BOT_TOKEN`      | Slack Bot OAuth Token (starts with `xoxb-`)   |
 | `SLACK_SIGNING_SECRET` | Slack Signing Secret for request verification |
 
 ### Customization
 
 Edit `WELCOME_MESSAGE.md` to customize the welcome message. Supports:
+
 - Headers (`#`, `##`)
 - Bold text (`**bold**`)
 - Links (`[text](url)`)
@@ -125,23 +129,25 @@ Edit `WELCOME_MESSAGE.md` to customize the welcome message. Supports:
 - Emoji 🎉
 
 Edit `src/config.ts` to update:
+
 - Channel IDs for joins and contributions
 - Data retention periods
 - Dashboard URLs
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Dashboard homepage |
-| `/health` | GET | Health check |
-| `/slack/events` | POST | Slack Events API endpoint |
-| `/api/stats` | GET | Get aggregate statistics |
-| `/api/joins` | GET | Get list of recent joins |
+| Endpoint        | Method | Description               |
+| --------------- | ------ | ------------------------- |
+| `/`             | GET    | Dashboard homepage        |
+| `/health`       | GET    | Health check              |
+| `/slack/events` | POST   | Slack Events API endpoint |
+| `/api/stats`    | GET    | Get aggregate statistics  |
+| `/api/joins`    | GET    | Get list of recent joins  |
 
 ## Version History
 
 **v3.0.0** (2025-11-27) - Merged implementation
+
 - Combined welcome bot with security testing features
 - Migrated to TypeScript for better type safety
 - Added comprehensive dashboard with analytics
@@ -149,6 +155,7 @@ Edit `src/config.ts` to update:
 - Improved code organization and maintainability
 
 **v2.0.0** (2025-11-27) - Security testing features
+
 - Added security testing framework (XSS, SQLi, CSRF, Open Redirect)
 - Implemented slash commands
 - Improved performance to <50ms response time

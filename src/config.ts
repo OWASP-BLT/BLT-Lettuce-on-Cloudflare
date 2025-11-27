@@ -4,9 +4,9 @@
 
 export const CONFIG = {
   // URLs
-  GITHUB_REPO_URL: 'https://github.com/OWASP-BLT/BLT-Lettuce',
+  GITHUB_REPO_URL: 'https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare',
   OWASP_BLT_URL: 'https://owasp.org/www-project-bug-logging-tool/',
-  DEPLOY_URL: 'https://deploy.workers.cloudflare.com/?url=https://github.com/OWASP-BLT/BLT-Lettuce',
+  DEPLOY_URL: 'https://deploy.workers.cloudflare.com/?url=https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare',
   
   // Slack signature validation
   SLACK_SIGNATURE_VERSION: 'v0',

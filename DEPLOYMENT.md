@@ -12,8 +12,8 @@ Complete guide for deploying BLT Lettuce Slack Bot to Cloudflare Workers.
 ## Step 1: Clone and Install
 
 ```bash
-git clone https://github.com/OWASP-BLT/BLT-Lettuce.git
-cd BLT-Lettuce
+git clone https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare.git
+cd BLT-Lettuce-on-Cloudflare
 npm install
 ```
 
@@ -221,5 +221,5 @@ npm run rollback
 ## Support
 
 For issues or questions:
-- GitHub Issues: [github.com/OWASP-BLT/BLT-Lettuce/issues](https://github.com/OWASP-BLT/BLT-Lettuce/issues)
+- GitHub Issues: [github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare/issues](https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare/issues)
 - OWASP BLT: [owasp.org/www-project-bug-logging-tool/](https://owasp.org/www-project-bug-logging-tool/)

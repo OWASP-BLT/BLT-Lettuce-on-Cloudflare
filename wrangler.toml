@@ -23,7 +23,8 @@ ENVIRONMENT = "production"
 
 # KV namespace for storing join events and statistics
 # Create with: wrangler kv:namespace create SLACK_BOT_KV
- [[kv_namespaces]]
- binding = "SLACK_BOT_KV"
- id = "SLACK_BOT_KV id"
- preview_id = "SLACK_BOT_KV preview_id"
+# Then uncomment and update the IDs below:
+# [[kv_namespaces]]
+# binding = "SLACK_BOT_KV"
+# id = "your-kv-namespace-id-here"
+# preview_id = "your-preview-kv-namespace-id-here"
