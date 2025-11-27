@@ -1,23 +1,29 @@
-# Dependencies
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
 
-# Build output
-dist/
-
-# Wrangler
-.wrangler/
-.dev.vars
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
+.secrets
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+dist/
+worker/
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
+*~
+*.code-workspace
 
 # OS
 .DS_Store
@@ -25,7 +31,22 @@ Thumbs.db
 
 # Logs
 *.log
-npm-debug.log*
+logs/
 
-# Test coverage
+# Testing
 coverage/
+.nyc_output/
+.pytest_cache
+
+# Build
+build/
+dist/
+*.tsbuildinfo
+
+# Python (archived)
+__pycache__
+.venv
+.ruff_cache
+
+# Archive (old Python implementation)
+archive/

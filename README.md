@@ -1,73 +1,126 @@
-# BLT-Lettuce-on-Cloudflare
+# BLT Lettuce
 
-🥬 **The BLT Lettuce (OWASP Helper) Bot** - A Slack welcome bot hosted on Cloudflare Workers
+🥬 **The BLT Lettuce (OWASP Helper) Bot** - A comprehensive serverless Slackbot for the OWASP BLT project, built on Cloudflare Workers with TypeScript.
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare)
 
 ## Features
 
-- 🎉 **Automatic Welcome Messages** - Sends a personalized welcome message to new members when they join your Slack workspace
-- 📝 **Editable Welcome Message** - Customize the welcome message by editing `WELCOME_MESSAGE.md`
-- 📊 **Stats Dashboard** - Track join statistics with a beautiful dashboard
-- 📈 **Analytics** - View charts showing joins over time
-- 🚀 **One-Click Deploy** - Deploy to Cloudflare Workers with a single click
+- 🎉 **Automatic Welcome Messages** - Sends personalized welcome messages to new members
+- 🔒 **Security Testing** - Run XSS, SQLi, CSRF, and Open Redirect tests via slash commands
+- 📊 **Analytics Dashboard** - Track join statistics with beautiful charts
+- ⚡ **Edge Performance** - Sub-50ms response times via Cloudflare's global network
+- 🤖 **Smart Event Handling** - Detects contribution mentions and handles DMs
+- 🚀 **Zero Infrastructure** - No servers to manage, scales automatically
 
 ## Quick Start
 
-### One-Click Deploy
+```bash
+# 1. Install dependencies
+npm install
 
-1. Click the **Deploy to Cloudflare Workers** button above
-2. Follow the prompts to connect your Cloudflare account
-3. Configure your Slack app credentials (see below)
-4. Your bot is live!
+# 2. Create KV namespace
+npx wrangler kv:namespace create SLACK_BOT_KV
+# Update wrangler.toml with the returned namespace ID
 
-### Manual Setup
+# 3. Configure Slack app at api.slack.com/apps
+# - Create new app with Bot Token Scopes:
+#   chat:write, channels:read, im:write, im:read, users:read
+# - Enable slash commands: /blt-test, /blt-help
+# - Enable events: team_join, message.channels, message.im
+# - Copy Bot Token and Signing Secret
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare.git
-   cd BLT-Lettuce-on-Cloudflare
-   ```
+# 4. Set up credentials
+npx wrangler secret put SLACK_BOT_TOKEN
+npx wrangler secret put SLACK_SIGNING_SECRET
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# 5. Deploy to Cloudflare
+npm run deploy
 
-3. **Create a Slack App**
-   - Go to [Slack API](https://api.slack.com/apps) and create a new app
-   - Enable **Event Subscriptions** and subscribe to the `team_join` event
-   - Add the following **Bot Token Scopes**:
-     - `chat:write` - Send messages
-     - `im:write` - Open direct messages
-     - `users:read` - Read user info
-   - Install the app to your workspace
-   - Copy the **Bot User OAuth Token** and **Signing Secret**
+# 6. Update Slack app Request URL to:
+# https://your-worker.workers.dev/slack/events
+```
 
-4. **Create a KV namespace**
-   ```bash
-   npx wrangler kv:namespace create SLACK_BOT_KV
-   ```
-   Update `wrangler.toml` with the returned namespace ID.
+## Usage
 
-5. **Set secrets**
-   ```bash
-   npx wrangler secret put SLACK_BOT_TOKEN
-   npx wrangler secret put SLACK_SIGNING_SECRET
-   ```
+### Slash Commands
 
-6. **Deploy**
-   ```bash
-   npm run deploy
-   ```
+- `/blt-test xss <url>` - Test for XSS vulnerabilities
+- `/blt-test sqli <url>` - Test for SQL injection
+- `/blt-test csrf <url>` - Check CSRF protection
+- `/blt-test open-redirect <url>` - Test redirect handling
+- `/blt-help` - Show help message
 
-7. **Configure Slack Event URL**
-   - In your Slack app settings, set the Event Request URL to:
-     `https://your-worker.your-subdomain.workers.dev/slack/events`
+### Dashboard
 
-## Customizing the Welcome Message
+Visit your worker URL to see:
 
-Edit the `WELCOME_MESSAGE.md` file to customize the welcome message sent to new members. The file supports:
+- Total members welcomed
+- Join statistics and charts
+- Recent join events
+- 30-day join trends
+
+### Automatic Features
+
+- **Welcome Messages**: New members receive a customizable welcome DM
+- **Contribution Detection**: Mentions of "contribute" trigger helpful responses
+- **DM Handling**: Direct messages are logged and acknowledged
+
+## Development
+
+```bash
+# Local development
+npm run dev
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Run tests
+npm test
+
+# View live logs
+npm run logs
+```
+
+## Project Structure
+
+```
+BLT-Lettuce/
+├── src/
+│   ├── index.ts              # Entry point & routing
+│   ├── types.ts              # TypeScript type definitions
+│   ├── config.ts             # Configuration constants
+│   ├── dashboard.ts          # Dashboard HTML generator
+│   ├── handlers/
+│   │   ├── commands.ts       # Slash command handlers
+│   │   ├── events.ts         # Slack event handlers
+│   │   └── api.ts            # API endpoint handlers
+│   ├── tests/
+│   │   ├── runner.ts         # Security test execution
+│   │   └── payloads.ts       # OWASP test payloads
+│   └── utils/
+│       ├── slack-api.ts      # Slack API wrappers
+│       └── slack-verify.ts   # Request verification
+├── WELCOME_MESSAGE.md        # Customizable welcome message
+├── wrangler.toml            # Cloudflare config
+└── package.json             # Dependencies
+```
+
+## Configuration
+
+### Environment Variables
+
+| Variable               | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `SLACK_BOT_TOKEN`      | Slack Bot OAuth Token (starts with `xoxb-`)   |
+| `SLACK_SIGNING_SECRET` | Slack Signing Secret for request verification |
+
+### Customization
+
+Edit `WELCOME_MESSAGE.md` to customize the welcome message. Supports:
 
 - Headers (`#`, `##`)
 - Bold text (`**bold**`)
@@ -75,62 +128,48 @@ Edit the `WELCOME_MESSAGE.md` file to customize the welcome message sent to new 
 - Bullet points (`-`)
 - Emoji 🎉
 
-After editing, redeploy to apply changes:
-```bash
-npm run deploy
-```
+Edit `src/config.ts` to update:
 
-## Dashboard
-
-The bot includes a built-in dashboard at your worker URL that shows:
-
-- **Total Members Welcomed** - Count of all members who received welcome messages
-- **Last Join** - When the most recent member joined
-- **Joins Today** - Number of new members today
-- **Joins Chart** - Visual chart of joins over the last 30 days
-- **Recent Joins List** - Table of recent join events
+- Channel IDs for joins and contributions
+- Data retention periods
+- Dashboard URLs
 
 ## API Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /` | Dashboard homepage |
-| `POST /slack/events` | Slack Events API endpoint |
-| `GET /api/stats` | Get aggregate statistics |
-| `GET /api/joins` | Get list of recent joins |
+| Endpoint        | Method | Description               |
+| --------------- | ------ | ------------------------- |
+| `/`             | GET    | Dashboard homepage        |
+| `/health`       | GET    | Health check              |
+| `/slack/events` | POST   | Slack Events API endpoint |
+| `/api/stats`    | GET    | Get aggregate statistics  |
+| `/api/joins`    | GET    | Get list of recent joins  |
 
-## Development
+## Version History
 
-```bash
-# Run locally
-npm run dev
+**v3.0.0** (2025-11-27) - Merged implementation
 
-# Type check
-npm run type-check
+- Combined welcome bot with security testing features
+- Migrated to TypeScript for better type safety
+- Added comprehensive dashboard with analytics
+- Unified event handling and slash commands
+- Improved code organization and maintainability
 
-# Lint
-npm run lint
+**v2.0.0** (2025-11-27) - Security testing features
 
-# Run tests
-npm test
-```
+- Added security testing framework (XSS, SQLi, CSRF, Open Redirect)
+- Implemented slash commands
+- Improved performance to <50ms response time
 
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `SLACK_BOT_TOKEN` | Slack Bot OAuth Token (starts with `xoxb-`) |
-| `SLACK_SIGNING_SECRET` | Slack Signing Secret for request verification |
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+**v1.0.0** (2024) - Original Python implementation (archived)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+## License
+
+GPL-3.0 - See [LICENSE](LICENSE)
 
 ## About OWASP BLT
 
 [OWASP BLT](https://owasp.org/www-project-bug-logging-tool/) (Bug Logging Tool) is an open-source project designed to help the security community track and report vulnerabilities.
-

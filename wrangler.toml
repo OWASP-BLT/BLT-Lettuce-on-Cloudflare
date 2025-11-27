@@ -1,21 +1,30 @@
-name = "blt-lettuce-slack-bot"
+name = "blt-lettuce-slackbot"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-11-27"
 
-# Rules for loading non-JavaScript files
+[build]
+command = ""
+
+[build.upload]
+format = "modules"
+
 [[rules]]
 type = "Text"
 globs = ["**/*.md"]
 fallthrough = true
 
-# KV namespace for storing join events
-[[kv_namespaces]]
-binding = "SLACK_BOT_KV"
-id = "YOUR_KV_NAMESPACE_ID"
-
-# Environment variables (set these via wrangler secret or dashboard)
-# SLACK_BOT_TOKEN - Your Slack Bot OAuth Token
-# SLACK_SIGNING_SECRET - Your Slack Signing Secret
+# Environment variables (set via: wrangler secret put <KEY>)
+# Required secrets:
+# - SLACK_BOT_TOKEN
+# - SLACK_SIGNING_SECRET
 
 [vars]
 ENVIRONMENT = "production"
+
+# KV namespace for storing join events and statistics
+# Create with: wrangler kv:namespace create SLACK_BOT_KV
+# Then uncomment and update the IDs below:
+# [[kv_namespaces]]
+# binding = "SLACK_BOT_KV"
+# id = "your-kv-namespace-id-here"
+# preview_id = "your-preview-kv-namespace-id-here"
