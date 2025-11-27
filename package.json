@@ -1,7 +1,7 @@
 {
-  "name": "blt-lettuce-slack-bot",
-  "version": "1.0.0",
-  "description": "OWASP BLT Lettuce Slack Bot - Welcome message bot hosted on Cloudflare Workers",
+  "name": "blt-lettuce-slackbot",
+  "version": "3.0.0",
+  "description": "OWASP BLT Lettuce Slack Bot - Comprehensive Cloudflare Workers implementation with welcome messages, security testing, and dashboard",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
@@ -9,17 +9,23 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "logs": "wrangler tail",
+    "rollback": "wrangler rollback"
   },
   "keywords": [
     "slack",
     "bot",
+    "owasp",
+    "blt",
     "cloudflare",
     "workers",
-    "owasp",
-    "blt"
+    "security",
+    "testing"
   ],
-  "license": "AGPL-3.0",
+  "author": "OWASP BLT Team",
+  "license": "GPL-3.0",
+  "dependencies": {},
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231218.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
@@ -27,6 +33,6 @@
     "eslint": "^8.56.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.0",
-    "wrangler": "^3.22.1"
+    "wrangler": "^3.96.0"
   }
 }
