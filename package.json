@@ -28,8 +28,5 @@
     "typescript": "^5.3.3",
     "vitest": "^1.1.0",
     "wrangler": "^3.22.1"
-  },
-  "dependencies": {
-    "marked": "^11.1.0"
   }
 }

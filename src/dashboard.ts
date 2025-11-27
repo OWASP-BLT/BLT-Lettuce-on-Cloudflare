@@ -2,6 +2,8 @@
  * Dashboard HTML generator for the Slack Welcome Bot
  */
 
+import { CONFIG } from './config';
+
 export function renderDashboard(): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -280,7 +282,7 @@ export function renderDashboard(): string {
     <div class="setup-section">
       <h2>🚀 Deploy Your Own</h2>
       <p>Set up your own Slack welcome bot in minutes with one-click deployment to Cloudflare Workers.</p>
-      <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare" class="deploy-button">
+      <a href="${CONFIG.DEPLOY_URL}" class="deploy-button">
         Deploy to Cloudflare
       </a>
     </div>
@@ -288,8 +290,8 @@ export function renderDashboard(): string {
 
   <footer>
     <p>
-      Made with ❤️ by <a href="https://owasp.org/www-project-bug-logging-tool/">OWASP BLT</a> | 
-      <a href="https://github.com/OWASP-BLT/BLT-Lettuce-on-Cloudflare">GitHub</a>
+      Made with ❤️ by <a href="${CONFIG.OWASP_BLT_URL}">OWASP BLT</a> | 
+      <a href="${CONFIG.GITHUB_REPO_URL}">GitHub</a>
     </p>
   </footer>
 

@@ -3,6 +3,10 @@
  */
 
 import { SlackBlock } from './types';
+import { CONFIG } from './config';
+
+// Regex pattern to validate Slack signature format (v0=hexstring)
+const SLACK_SIGNATURE_PATTERN = /^v0=[a-f0-9]{64}$/;
 
 /**
  * Verify that a request is legitimately from Slack using HMAC signature
@@ -18,14 +22,25 @@ export async function verifySlackSignature(
     return false;
   }
 
-  // Check if request is older than 5 minutes (prevents replay attacks)
+  // Validate signature format before processing
+  if (!SLACK_SIGNATURE_PATTERN.test(slackSignature)) {
+    return false;
+  }
+
+  // Validate timestamp is a valid number
+  const timestampNum = parseInt(timestamp, 10);
+  if (isNaN(timestampNum) || timestampNum <= 0) {
+    return false;
+  }
+
+  // Check if request is older than configured max age (prevents replay attacks)
   const currentTime = Math.floor(Date.now() / 1000);
-  if (Math.abs(currentTime - parseInt(timestamp, 10)) > 60 * 5) {
+  if (Math.abs(currentTime - timestampNum) > CONFIG.SLACK_SIGNATURE_MAX_AGE_SECONDS) {
     return false;
   }
 
   const body = await request.text();
-  const sigBaseString = `v0:${timestamp}:${body}`;
+  const sigBaseString = `${CONFIG.SLACK_SIGNATURE_VERSION}:${timestamp}:${body}`;
 
   // Create HMAC-SHA256 signature
   const encoder = new TextEncoder();
@@ -40,7 +55,7 @@ export async function verifySlackSignature(
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(sigBaseString));
   const hashArray = Array.from(new Uint8Array(signature));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  const computedSignature = `v0=${hashHex}`;
+  const computedSignature = `${CONFIG.SLACK_SIGNATURE_VERSION}=${hashHex}`;
 
   // Constant-time comparison to prevent timing attacks
   return timingSafeEqual(computedSignature, slackSignature);

@@ -8,6 +8,7 @@
 import { Env, JoinEvent, SlackEvent, SlackUrlVerification, Stats } from './types';
 import { verifySlackSignature, sendWelcomeDM } from './slack';
 import { renderDashboard } from './dashboard';
+import { CONFIG } from './config';
 import welcomeMessage from '../WELCOME_MESSAGE.md';
 
 export default {
@@ -105,7 +106,7 @@ async function recordJoinEvent(env: Env, userId: string, userName: string): Prom
   // Store individual join event
   const eventKey = `join:${timestamp}:${userId}`;
   await env.SLACK_BOT_KV.put(eventKey, JSON.stringify(joinEvent), {
-    expirationTtl: 60 * 60 * 24 * 365, // Keep for 1 year
+    expirationTtl: CONFIG.JOIN_EVENT_TTL_SECONDS,
   });
 
   // Update statistics
@@ -130,9 +131,9 @@ async function updateStats(env: Env, timestamp: string): Promise<void> {
   const date = timestamp.split('T')[0];
   stats.dailyJoins[date] = (stats.dailyJoins[date] || 0) + 1;
 
-  // Keep only last 90 days of daily data
+  // Keep only configured days of daily data
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - 90);
+  cutoffDate.setDate(cutoffDate.getDate() - CONFIG.DAILY_STATS_RETENTION_DAYS);
   const cutoffString = cutoffDate.toISOString().split('T')[0];
   
   for (const d of Object.keys(stats.dailyJoins)) {
