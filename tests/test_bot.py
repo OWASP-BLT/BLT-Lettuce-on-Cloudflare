@@ -6,142 +6,7 @@ import pytest
 import json
 
 
-class TestParseIndexMd:
-    """Tests for parsing index.md YAML frontmatter"""
-
-    def test_parse_valid_frontmatter(self):
-        """Test parsing valid YAML frontmatter"""
-        content = """---
-layout: col-sidebar
-title: OWASP Juice Shop
-tags: juiceshop
-level: 4
-type: tool
-pitch: A great project for testing
----
-
-Some markdown content here.
-"""
-        # Import parse function - we'll test the parsing logic
-        metadata = parse_index_md(content)
-
-        assert metadata is not None
-        assert metadata["title"] == "OWASP Juice Shop"
-        assert metadata["level"] == 4
-        assert metadata["type"] == "tool"
-        assert "juiceshop" in str(metadata.get("tags", []))
-
-    def test_parse_no_frontmatter(self):
-        """Test that content without frontmatter returns None"""
-        content = """# Regular Markdown
-
-This is just regular markdown without frontmatter.
-"""
-        metadata = parse_index_md(content)
-        assert metadata is None
-
-    def test_parse_empty_content(self):
-        """Test that empty content returns None"""
-        metadata = parse_index_md("")
-        assert metadata is None
-
-    def test_parse_incomplete_frontmatter(self):
-        """Test that incomplete frontmatter returns None"""
-        content = """---
-title: Test Project
-"""
-        metadata = parse_index_md(content)
-        assert metadata is None
-
-
-class TestFlowchartQuestions:
-    """Tests for flowchart question structure"""
-
-    def test_flowchart_has_start(self):
-        """Test that flowchart has a start node"""
-        assert "start" in FLOWCHART_QUESTIONS
-        assert "question" in FLOWCHART_QUESTIONS["start"]
-        assert "options" in FLOWCHART_QUESTIONS["start"]
-
-    def test_all_options_have_required_fields(self):
-        """Test that all options have required fields"""
-        for key, question_data in FLOWCHART_QUESTIONS.items():
-            for option in question_data["options"]:
-                assert "text" in option, f"Option in {key} missing 'text'"
-                assert "value" in option, f"Option in {key} missing 'value'"
-                assert "next" in option, f"Option in {key} missing 'next'"
-
-    def test_next_nodes_exist_or_end(self):
-        """Test that all 'next' values point to existing nodes or 'end'"""
-        valid_nodes = set(FLOWCHART_QUESTIONS.keys()) | {"end"}
-
-        for key, question_data in FLOWCHART_QUESTIONS.items():
-            for option in question_data["options"]:
-                next_node = option["next"]
-                assert next_node in valid_nodes, f"Invalid next node '{next_node}' in {key}"
-
-
-class TestFilterProjects:
-    """Tests for project filtering logic"""
-
-    def test_filter_tool_projects(self):
-        """Test filtering tool projects"""
-        projects = [
-            {"title": "Test Tool", "type": "tool", "pitch": "A code analysis tool", "tags": []},
-            {"title": "Test Doc", "type": "documentation", "pitch": "A guide", "tags": []},
-        ]
-
-        matching = filter_projects(projects, "code_analysis")
-        assert len(matching) == 1
-        assert matching[0]["title"] == "Test Tool"
-
-    def test_filter_documentation_projects(self):
-        """Test filtering documentation projects"""
-        projects = [
-            {"title": "Security Standard", "type": "standard", "pitch": "A security checklist", "tags": []},
-            {"title": "Test Tool", "type": "tool", "pitch": "A testing tool", "tags": []},
-        ]
-
-        matching = filter_projects(projects, "standards")
-        assert len(matching) == 1
-        assert matching[0]["title"] == "Security Standard"
-
-    def test_filter_returns_empty_for_unknown_category(self):
-        """Test that unknown categories return all projects (no filter)"""
-        projects = [
-            {"title": "Project 1", "type": "tool", "pitch": "A tool", "tags": []},
-        ]
-
-        matching = filter_projects(projects, "unknown_category")
-        assert len(matching) == 0
-
-
-class TestGetLevelEmoji:
-    """Tests for level emoji mapping"""
-
-    def test_flagship_level(self):
-        """Test flagship level emoji"""
-        assert get_level_emoji(4) == "🏆"
-
-    def test_lab_level(self):
-        """Test lab level emoji"""
-        assert get_level_emoji(3) == "🥇"
-
-    def test_incubator_level(self):
-        """Test incubator level emoji"""
-        assert get_level_emoji(2) == "🥈"
-
-    def test_production_level(self):
-        """Test production level emoji"""
-        assert get_level_emoji(1) == "🥉"
-
-    def test_unknown_level(self):
-        """Test unknown level emoji"""
-        assert get_level_emoji(0) == "📦"
-        assert get_level_emoji(5) == "📦"
-
-
-# Helper functions extracted for testing
+# Helper functions extracted for testing (defined first, before tests)
 def parse_index_md(content: str) -> dict | None:
     """Parse YAML frontmatter from index.md"""
     if not content.startswith("---"):
@@ -297,6 +162,141 @@ def get_level_emoji(level: int) -> str:
         1: "🥉",
     }
     return levels.get(level, "📦")
+
+
+# Test classes
+class TestParseIndexMd:
+    """Tests for parsing index.md YAML frontmatter"""
+
+    def test_parse_valid_frontmatter(self):
+        """Test parsing valid YAML frontmatter"""
+        content = """---
+layout: col-sidebar
+title: OWASP Juice Shop
+tags: juiceshop
+level: 4
+type: tool
+pitch: A great project for testing
+---
+
+Some markdown content here.
+"""
+        metadata = parse_index_md(content)
+
+        assert metadata is not None
+        assert metadata["title"] == "OWASP Juice Shop"
+        assert metadata["level"] == 4
+        assert metadata["type"] == "tool"
+        assert "juiceshop" in str(metadata.get("tags", []))
+
+    def test_parse_no_frontmatter(self):
+        """Test that content without frontmatter returns None"""
+        content = """# Regular Markdown
+
+This is just regular markdown without frontmatter.
+"""
+        metadata = parse_index_md(content)
+        assert metadata is None
+
+    def test_parse_empty_content(self):
+        """Test that empty content returns None"""
+        metadata = parse_index_md("")
+        assert metadata is None
+
+    def test_parse_incomplete_frontmatter(self):
+        """Test that incomplete frontmatter returns None"""
+        content = """---
+title: Test Project
+"""
+        metadata = parse_index_md(content)
+        assert metadata is None
+
+
+class TestFlowchartQuestions:
+    """Tests for flowchart question structure"""
+
+    def test_flowchart_has_start(self):
+        """Test that flowchart has a start node"""
+        assert "start" in FLOWCHART_QUESTIONS
+        assert "question" in FLOWCHART_QUESTIONS["start"]
+        assert "options" in FLOWCHART_QUESTIONS["start"]
+
+    def test_all_options_have_required_fields(self):
+        """Test that all options have required fields"""
+        for key, question_data in FLOWCHART_QUESTIONS.items():
+            for option in question_data["options"]:
+                assert "text" in option, f"Option in {key} missing 'text'"
+                assert "value" in option, f"Option in {key} missing 'value'"
+                assert "next" in option, f"Option in {key} missing 'next'"
+
+    def test_next_nodes_exist_or_end(self):
+        """Test that all 'next' values point to existing nodes or 'end'"""
+        valid_nodes = set(FLOWCHART_QUESTIONS.keys()) | {"end"}
+
+        for key, question_data in FLOWCHART_QUESTIONS.items():
+            for option in question_data["options"]:
+                next_node = option["next"]
+                assert next_node in valid_nodes, f"Invalid next node '{next_node}' in {key}"
+
+
+class TestFilterProjects:
+    """Tests for project filtering logic"""
+
+    def test_filter_tool_projects(self):
+        """Test filtering tool projects"""
+        projects = [
+            {"title": "Test Tool", "type": "tool", "pitch": "A code analysis tool", "tags": []},
+            {"title": "Test Doc", "type": "documentation", "pitch": "A guide", "tags": []},
+        ]
+
+        matching = filter_projects(projects, "code_analysis")
+        assert len(matching) == 1
+        assert matching[0]["title"] == "Test Tool"
+
+    def test_filter_documentation_projects(self):
+        """Test filtering documentation projects"""
+        projects = [
+            {"title": "Security Standard", "type": "standard", "pitch": "A security checklist", "tags": []},
+            {"title": "Test Tool", "type": "tool", "pitch": "A testing tool", "tags": []},
+        ]
+
+        matching = filter_projects(projects, "standards")
+        assert len(matching) == 1
+        assert matching[0]["title"] == "Security Standard"
+
+    def test_filter_returns_empty_for_unknown_category(self):
+        """Test that unknown categories return empty list"""
+        projects = [
+            {"title": "Project 1", "type": "tool", "pitch": "A tool", "tags": []},
+        ]
+
+        matching = filter_projects(projects, "unknown_category")
+        assert len(matching) == 0
+
+
+class TestGetLevelEmoji:
+    """Tests for level emoji mapping"""
+
+    def test_flagship_level(self):
+        """Test flagship level emoji"""
+        assert get_level_emoji(4) == "🏆"
+
+    def test_lab_level(self):
+        """Test lab level emoji"""
+        assert get_level_emoji(3) == "🥇"
+
+    def test_incubator_level(self):
+        """Test incubator level emoji"""
+        assert get_level_emoji(2) == "🥈"
+
+    def test_production_level(self):
+        """Test production level emoji"""
+        assert get_level_emoji(1) == "🥉"
+
+    def test_unknown_level(self):
+        """Test unknown level emoji"""
+        assert get_level_emoji(0) == "📦"
+        assert get_level_emoji(5) == "📦"
 
 
 if __name__ == "__main__":
