@@ -29,3 +29,17 @@ npm-debug.log*
 
 # Test coverage
 coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+.python-version
+uv.lock

@@ -1,17 +1,16 @@
 name = "blt-lettuce-slack-bot"
-main = "src/index.ts"
-compatibility_date = "2024-01-01"
+main = "src/python/entry.py"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["python_workers"]
 
-# Rules for loading non-JavaScript files
-[[rules]]
-type = "Text"
-globs = ["**/*.md"]
-fallthrough = true
-
-# KV namespace for storing join events
+# KV namespace for storing project cache and conversation state
 [[kv_namespaces]]
 binding = "SLACK_BOT_KV"
 id = "YOUR_KV_NAMESPACE_ID"
+
+# Scheduled tasks for cache refresh (every 24 hours)
+[triggers]
+crons = ["0 0 * * *"]
 
 # Environment variables (set these via wrangler secret or dashboard)
 # SLACK_BOT_TOKEN - Your Slack Bot OAuth Token
@@ -19,3 +18,6 @@ id = "YOUR_KV_NAMESPACE_ID"
 
 [vars]
 ENVIRONMENT = "production"
+
+[observability]
+enabled = true

@@ -1,8 +1,8 @@
 {
   "name": "blt-lettuce-slack-bot",
   "version": "1.0.0",
-  "description": "OWASP BLT Lettuce Slack Bot - Welcome message bot hosted on Cloudflare Workers",
-  "main": "src/index.ts",
+  "description": "OWASP BLT Lettuce Slack Bot - Interactive Project Finder Bot hosted on Cloudflare Workers (Python)",
+  "main": "src/python/entry.py",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
@@ -17,7 +17,8 @@
     "cloudflare",
     "workers",
     "owasp",
-    "blt"
+    "blt",
+    "python"
   ],
   "license": "AGPL-3.0",
   "devDependencies": {
