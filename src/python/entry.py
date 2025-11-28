@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import time
 import re
+from datetime import datetime, timedelta
 from typing import Any
 
 from workers import WorkerEntrypoint, Response, Request
@@ -89,6 +90,8 @@ class Default(WorkerEntrypoint):
             path = "api_stats"
         elif "/api/projects" in url_str:
             path = "api_projects"
+        elif "/api/joins" in url_str:
+            path = "api_joins"
 
         method = str(request.method).upper()
 
@@ -101,6 +104,8 @@ class Default(WorkerEntrypoint):
             return await self.handle_get_stats()
         elif path == "api_projects" and method == "GET":
             return await self.handle_get_projects()
+        elif path == "api_joins" and method == "GET":
+            return await self.handle_get_joins(request)
 
         # Serve the dashboard for all other routes
         return self.render_dashboard()
@@ -130,11 +135,20 @@ class Default(WorkerEntrypoint):
             if body.get("type") == "event_callback":
                 event = body.get("event", {})
 
-                # Handle team_join events - send interactive welcome
+                # Handle team_join events - send interactive welcome and record join
                 if event.get("type") == "team_join":
                     user = event.get("user", {})
-                    user_id = user.get("id") if isinstance(user, dict) else user
+                    if isinstance(user, dict):
+                        user_id = user.get("id")
+                        user_name = user.get("name") or user.get("real_name") or "Unknown"
+                    else:
+                        user_id = user
+                        user_name = "Unknown"
+                    
+                    # Send welcome message
                     await self.send_welcome_message(user_id)
+                    # Record the join event for tracking
+                    await self.record_join_event(user_id, user_name)
 
                 # Handle direct messages (app_mention or message events)
                 elif event.get("type") == "message" and event.get("channel_type") == "im":
@@ -766,13 +780,116 @@ class Default(WorkerEntrypoint):
 
         await self.env.SLACK_BOT_KV.put(stats_key, json.dumps(stats))
 
-    async def handle_get_stats(self) -> Response:
-        """Handle API request for statistics"""
-        stats_key = "stats:searches"
-        stats = await self.env.SLACK_BOT_KV.get(stats_key)
+    async def record_join_event(self, user_id: str, user_name: str) -> None:
+        """Record a join event in KV storage"""
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        
+        join_event = {
+            "userId": user_id,
+            "userName": user_name,
+            "timestamp": timestamp,
+            "success": True
+        }
+
+        # Store individual join event (expires after 1 year)
+        event_key = f"join:{timestamp}:{user_id}"
+        await self.env.SLACK_BOT_KV.put(
+            event_key,
+            json.dumps(join_event),
+            expirationTtl=365 * 24 * 60 * 60  # 1 year
+        )
+
+        # Update aggregate join statistics
+        await self.update_join_stats(timestamp)
+
+    async def update_join_stats(self, timestamp: str) -> None:
+        """Update aggregate join statistics"""
+        stats_key = "stats:joins"
+        existing = await self.env.SLACK_BOT_KV.get(stats_key)
+
+        stats = json.loads(existing) if existing else {
+            "totalJoins": 0,
+            "lastJoinAt": None,
+            "dailyJoins": {}
+        }
+
+        stats["totalJoins"] += 1
+        stats["lastJoinAt"] = timestamp
+
+        # Track daily joins for charting
+        date = timestamp.split("T")[0]
+        stats["dailyJoins"][date] = stats["dailyJoins"].get(date, 0) + 1
+
+        # Keep only 90 days of daily data
+        cutoff_date = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%d")
+        stats["dailyJoins"] = {
+            d: count for d, count in stats["dailyJoins"].items()
+            if d >= cutoff_date
+        }
+
+        await self.env.SLACK_BOT_KV.put(stats_key, json.dumps(stats))
+
+    async def handle_get_joins(self, request: Request) -> Response:
+        """Handle API request for recent joins"""
+        url_str = str(request.url)
+        # Parse limit from query string
+        limit = 50
+        if "?" in url_str:
+            query_string = url_str.split("?")[1]
+            for param in query_string.split("&"):
+                if param.startswith("limit="):
+                    try:
+                        limit = int(param.split("=")[1])
+                    except ValueError:
+                        pass
+
+        joins = []
+        list_result = await self.env.SLACK_BOT_KV.list(prefix="join:")
+
+        # Keys are in format "join:{ISO_timestamp}:{user_id}"
+        # ISO 8601 timestamps sort lexicographically in chronological order,
+        # so reverse sorting gives us most recent first
+        keys = [k.name for k in list_result.keys]
+        keys.sort(reverse=True)
+        keys = keys[:limit]
+
+        for key in keys:
+            value = await self.env.SLACK_BOT_KV.get(key)
+            if value:
+                joins.append(json.loads(value))
 
         return Response(
-            stats or json.dumps({"total": 0, "categories": {}}),
+            json.dumps(joins),
+            headers={
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+
+    async def handle_get_stats(self) -> Response:
+        """Handle API request for statistics (includes both searches and joins)"""
+        # Get search stats
+        search_stats_key = "stats:searches"
+        search_stats = await self.env.SLACK_BOT_KV.get(search_stats_key)
+        search_data = json.loads(search_stats) if search_stats else {"total": 0, "categories": {}}
+
+        # Get join stats
+        join_stats_key = "stats:joins"
+        join_stats = await self.env.SLACK_BOT_KV.get(join_stats_key)
+        join_data = json.loads(join_stats) if join_stats else {
+            "totalJoins": 0,
+            "lastJoinAt": None,
+            "dailyJoins": {}
+        }
+
+        # Combine stats
+        combined_stats = {
+            "searches": search_data,
+            "joins": join_data
+        }
+
+        return Response(
+            json.dumps(combined_stats),
             headers={
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
@@ -1034,6 +1151,21 @@ class Default(WorkerEntrypoint):
   <div class="container">
     <div class="stats-grid">
       <div class="stat-card">
+        <h3>Members Welcomed</h3>
+        <div class="value" id="total-joins">-</div>
+        <div class="subtitle">Total workspace joins</div>
+      </div>
+      <div class="stat-card">
+        <h3>Last Join</h3>
+        <div class="value" id="last-join">-</div>
+        <div class="subtitle" id="last-join-full">Never</div>
+      </div>
+      <div class="stat-card">
+        <h3>Joins Today</h3>
+        <div class="value" id="today-joins">-</div>
+        <div class="subtitle">New members today</div>
+      </div>
+      <div class="stat-card">
         <h3>Total Searches</h3>
         <div class="value" id="total-searches">-</div>
         <div class="subtitle">Project finder queries</div>
@@ -1047,6 +1179,20 @@ class Default(WorkerEntrypoint):
         <h3>Most Popular Category</h3>
         <div class="value" id="top-category">-</div>
         <div class="subtitle">Most searched</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Joins Over Time</h2>
+      <div class="chart-container">
+        <canvas id="joinsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 Recent Joins</h2>
+      <div id="joins-list" class="projects-list">
+        <div class="loading">Loading joins...</div>
       </div>
     </div>
 
@@ -1085,17 +1231,20 @@ class Default(WorkerEntrypoint):
   </footer>
 
   <script>
-    let chart = null;
+    let categoriesChart = null;
+    let joinsChart = null;
 
     async function loadStats() {
       try {
         const response = await fetch('/api/stats');
         const stats = await response.json();
 
-        document.getElementById('total-searches').textContent = stats.total || 0;
+        // Handle search stats
+        const searchStats = stats.searches || {};
+        document.getElementById('total-searches').textContent = searchStats.total || 0;
 
         // Find top category
-        const categories = stats.categories || {};
+        const categories = searchStats.categories || {};
         let topCat = '-';
         let maxCount = 0;
         for (const [cat, count] of Object.entries(categories)) {
@@ -1106,10 +1255,70 @@ class Default(WorkerEntrypoint):
         }
         document.getElementById('top-category').textContent = topCat;
 
-        // Update chart
-        updateChart(categories);
+        // Update categories chart
+        updateCategoriesChart(categories);
+
+        // Handle join stats
+        const joinStats = stats.joins || {};
+        document.getElementById('total-joins').textContent = joinStats.totalJoins || 0;
+
+        // Update last join time
+        if (joinStats.lastJoinAt) {
+          const lastJoinDate = new Date(joinStats.lastJoinAt);
+          const now = new Date();
+          const diffMs = now - lastJoinDate;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffDays = Math.floor(diffMs / 86400000);
+
+          let timeAgo;
+          if (diffMins < 1) timeAgo = 'Just now';
+          else if (diffMins < 60) timeAgo = diffMins + 'm ago';
+          else if (diffHours < 24) timeAgo = diffHours + 'h ago';
+          else timeAgo = diffDays + 'd ago';
+
+          document.getElementById('last-join').textContent = timeAgo;
+          document.getElementById('last-join-full').textContent = lastJoinDate.toLocaleString();
+        }
+
+        // Update today's joins
+        const today = new Date().toISOString().split('T')[0];
+        const todayJoins = joinStats.dailyJoins?.[today] || 0;
+        document.getElementById('today-joins').textContent = todayJoins;
+
+        // Update joins chart
+        updateJoinsChart(joinStats.dailyJoins || {});
       } catch (error) {
         console.error('Error loading stats:', error);
+      }
+    }
+
+    async function loadJoins() {
+      try {
+        const response = await fetch('/api/joins?limit=10');
+        const joins = await response.json();
+
+        const container = document.getElementById('joins-list');
+
+        if (!joins || joins.length === 0) {
+          container.innerHTML = '<div class="loading">No joins recorded yet. New members will appear here when they join your Slack workspace.</div>';
+          return;
+        }
+
+        const html = joins.map(join => `
+          <div class="project-item">
+            <h4>${escapeHtml(join.userName)}</h4>
+            <div class="project-meta">
+              <span>🕐 ${new Date(join.timestamp).toLocaleString()}</span>
+              <span>✓ Welcomed</span>
+            </div>
+          </div>
+        `).join('');
+
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading joins:', error);
+        document.getElementById('joins-list').innerHTML = '<div class="loading">Error loading joins</div>';
       }
     }
 
@@ -1152,14 +1361,74 @@ class Default(WorkerEntrypoint):
       }
     }
 
-    function updateChart(categories) {
+    function updateJoinsChart(dailyJoins) {
+      const ctx = document.getElementById('joinsChart').getContext('2d');
+
+      // Generate last 30 days of labels
+      const labels = [];
+      const data = [];
+      const today = new Date();
+
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        data.push(dailyJoins[dateStr] || 0);
+      }
+
+      if (joinsChart) {
+        joinsChart.destroy();
+      }
+
+      joinsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'New Members',
+            data: data,
+            borderColor: '#1a73e8',
+            backgroundColor: 'rgba(26, 115, 232, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCategoriesChart(categories) {
       const ctx = document.getElementById('categoriesChart').getContext('2d');
 
       const labels = Object.keys(categories).map(k => k.replace(/_/g, ' '));
       const data = Object.values(categories);
 
-      if (chart) {
-        chart.destroy();
+      if (categoriesChart) {
+        categoriesChart.destroy();
       }
 
       if (labels.length === 0) {
@@ -1167,7 +1436,7 @@ class Default(WorkerEntrypoint):
         data.push(0);
       }
 
-      chart = new Chart(ctx, {
+      categoriesChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: labels,
@@ -1199,13 +1468,15 @@ class Default(WorkerEntrypoint):
 
     // Load data on page load
     loadStats();
+    loadJoins();
     loadProjects();
 
-    // Refresh every 60 seconds
+    // Refresh every 30 seconds
     setInterval(() => {
       loadStats();
+      loadJoins();
       loadProjects();
-    }, 60000);
+    }, 30000);
   </script>
 </body>
 </html>"""

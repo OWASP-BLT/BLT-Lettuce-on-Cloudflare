@@ -117,6 +117,11 @@ Start
 
 The bot includes a built-in dashboard at your worker URL that shows:
 
+- **Members Welcomed** - Count of all members who received welcome messages
+- **Last Join** - When the most recent member joined
+- **Joins Today** - Number of new members today
+- **Joins Chart** - Visual chart of joins over the last 30 days
+- **Recent Joins List** - Table of recent join events
 - **Total Searches** - Count of project finder queries
 - **Projects Indexed** - Number of OWASP projects in cache
 - **Search Categories** - Chart showing which categories are most searched
@@ -129,8 +134,9 @@ The bot includes a built-in dashboard at your worker URL that shows:
 | `GET /` | Dashboard homepage |
 | `POST /slack/events` | Slack Events API endpoint |
 | `POST /slack/interactivity` | Slack Interactive Components endpoint |
-| `GET /api/stats` | Get search statistics |
+| `GET /api/stats` | Get combined search and join statistics |
 | `GET /api/projects` | Get cached OWASP projects |
+| `GET /api/joins` | Get list of recent joins |
 
 ## Project Metadata
 
